@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# PyInstaller
+*.manifest
+*.spec
+build/
+dist/
+
+# Application specific
+debug_screenshots/
+

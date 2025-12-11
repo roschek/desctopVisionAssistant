@@ -1,0 +1,7 @@
+PyQt6
+mss
+keyboard
+google-generativeai
+Pillow
+pyinstaller
+python-dotenv
