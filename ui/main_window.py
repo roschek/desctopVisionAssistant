@@ -10,7 +10,7 @@ from PyQt6.QtCore import Qt, QEvent
 from services.screenshot import ScreenshotService
 from services.hotkeys import HotkeyListener
 from services.ai_handler import GeminiHandler
-from utils.stealth import apply_stealth_mode, set_click_through
+from utils.window_utils import apply_window_privacy, set_click_through
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self._connect_signals()
         self._setup_window_properties()
         self._setup_ui()
-        self._enable_stealth()
+        self._enable_privacy_mode()
         
         self.hotkey_listener.start()
 
@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         self.gemini_handler.processing_started.connect(self.show_loading)
 
     def _setup_window_properties(self) -> None:
-        self.setWindowTitle("Ghost Assistant")
+        self.setWindowTitle("Code Assistant")
         self.resize(1000, 800)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowOpacity(0.85)
@@ -102,17 +102,17 @@ class MainWindow(QMainWindow):
         # Footer
         hint_text = (
             "Ctrl+Alt+S: Add Screen | Ctrl+Alt+Space: Solve | "
-            "Ctrl+Alt+X: Reset | Ctrl+Alt+Z: Ghost | Esc: Close"
+            "Ctrl+Alt+X: Reset | Ctrl+Alt+Z: Overlay | Esc: Close"
         )
         hint_label = QLabel(hint_text)
         hint_label.setStyleSheet("color: #666666; font-size: 11px; font-weight: bold;")
         hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(hint_label)
 
-    def _enable_stealth(self) -> None:
+    def _enable_privacy_mode(self) -> None:
         try:
             hwnd = int(self.winId())
-            apply_stealth_mode(hwnd)
+            apply_window_privacy(hwnd)
         except Exception as e:
             print(f"Failed to get HWND: {e}")
 
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
             
             if self.click_through_enabled:
                 self.setWindowOpacity(0.4) # Делаем прозрачнее, чтобы код под окном был виден
-                self.status_label.setText("GHOST MODE (Click-Through)")
+                self.status_label.setText("OVERLAY MODE (Click-Through)")
                 self.status_label.setStyleSheet("color: #e67e22; font-size: 14px; font-weight: bold;")
                 self.content_area.setStyleSheet("background-color: rgba(30, 30, 30, 100); color: white; border: none;") # Полупрозрачный фон редактора
             else:
@@ -172,7 +172,7 @@ class MainWindow(QMainWindow):
             print(f"Capture failed: {e}")
         finally:
             self.show()
-            # Если мы были в режиме Ghost, нужно убедиться, что свойства окна восстановились корректно
+            # Если мы были в режиме Overlay, нужно убедиться, что свойства окна восстановились корректно
             # (Но hide/show может сбросить click-through, поэтому восстановим его при необходимости)
             if self.click_through_enabled:
                 hwnd = int(self.winId())

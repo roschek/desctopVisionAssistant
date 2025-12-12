@@ -2,7 +2,7 @@
 setlocal
 
 echo ==================================================
-echo DesktopVisualAssistant Build Script
+echo DesktopVisionAssistant Build Script
 echo ==================================================
 
 REM Check if python is available
@@ -30,11 +30,11 @@ if exist *.spec del /q *.spec
 
 echo.
 echo Starting PyInstaller...
-echo Options: --onefile --noconsole --clean --name "DesktopVisualAssistant"
+echo Options: --onefile --noconsole --clean --name "DesktopVisionAssistant"
 echo.
 
 REM Используем python -m PyInstaller чтобы избежать проблем с PATH
-python -m PyInstaller --noconsole --onefile --clean --name "DesktopVisualAssistant" main.py
+python -m PyInstaller --noconsole --onefile --clean --name "DesktopVisionAssistant" main.py
 
 if %errorlevel% neq 0 (
     echo.
@@ -51,7 +51,7 @@ echo.
 echo The executable is located in the 'dist' folder.
 echo.
 echo IMPORTANT REMINDERS:
-echo 1. Create a .env file next to DesktopVisualAssistant.exe in the 'dist' folder.
-echo 2. Run DesktopVisualAssistant.exe as Administrator.
+echo 1. Create a .env file next to DesktopVisionAssistant.exe in the 'dist' folder.
+echo 2. Run DesktopVisionAssistant.exe as Administrator.
 echo.
 pause

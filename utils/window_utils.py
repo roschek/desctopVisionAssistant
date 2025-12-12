@@ -8,9 +8,10 @@ GWL_EXSTYLE = -20
 WS_EX_LAYERED = 0x80000
 WS_EX_TRANSPARENT = 0x20  # Окно пропускает клики
 
-def apply_stealth_mode(hwnd: int) -> None:
+def apply_window_privacy(hwnd: int) -> None:
     """
-    Применяет режим 'невидимки' (WDA_EXCLUDEFROMCAPTURE).
+    Применяет режим приватности окна (WDA_EXCLUDEFROMCAPTURE).
+    Окно не будет отображаться при захвате экрана другими приложениями.
     """
     if sys.platform != "win32":
         return
@@ -19,7 +20,7 @@ def apply_stealth_mode(hwnd: int) -> None:
         user32 = ctypes.windll.user32
         user32.SetWindowDisplayAffinity(wintypes.HWND(hwnd), WDA_EXCLUDEFROMCAPTURE)
     except Exception as e:
-        print(f"Error applying stealth mode: {e}")
+        print(f"Error applying window privacy: {e}")
 
 def set_click_through(hwnd: int, enable: bool) -> None:
     """
@@ -47,3 +48,4 @@ def set_click_through(hwnd: int, enable: bool) -> None:
         
     except Exception as e:
         print(f"Error toggling click-through: {e}")
+

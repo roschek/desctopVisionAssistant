@@ -19,7 +19,7 @@ class HotkeyListener(QObject):
             keyboard.add_hotkey("ctrl+alt+z", lambda: self.toggle_click_through_signal.emit())
             
             self._is_active = True
-            print("Hotkeys: S=Add, Space=Analyze, X=Clear, Z=GhostMode")
+            print("Hotkeys: S=Add, Space=Analyze, X=Clear, Z=OverlayMode")
         except Exception as e:
             print(f"Failed to bind hotkeys: {e}")
 
