@@ -2,7 +2,7 @@
 setlocal
 
 echo ==================================================
-echo GhostHelper Build Script
+echo DesktopVisualAssistant Build Script
 echo ==================================================
 
 REM Check if python is available
@@ -30,11 +30,11 @@ if exist *.spec del /q *.spec
 
 echo.
 echo Starting PyInstaller...
-echo Options: --onefile --noconsole --clean --name "GhostHelper"
+echo Options: --onefile --noconsole --clean --name "DesktopVisualAssistant"
 echo.
 
 REM Используем python -m PyInstaller чтобы избежать проблем с PATH
-python -m PyInstaller --noconsole --onefile --clean --name "GhostHelper" main.py
+python -m PyInstaller --noconsole --onefile --clean --name "DesktopVisualAssistant" main.py
 
 if %errorlevel% neq 0 (
     echo.
@@ -51,7 +51,7 @@ echo.
 echo The executable is located in the 'dist' folder.
 echo.
 echo IMPORTANT REMINDERS:
-echo 1. Create a .env file next to GhostHelper.exe in the 'dist' folder.
-echo 2. Run GhostHelper.exe as Administrator.
+echo 1. Create a .env file next to DesktopVisualAssistant.exe in the 'dist' folder.
+echo 2. Run DesktopVisualAssistant.exe as Administrator.
 echo.
 pause
