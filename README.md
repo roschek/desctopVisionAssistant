@@ -1,4 +1,4 @@
-# GhostHelper
+# DesctropVisionAssistant
 
 Application for automated screenshot analysis and assistance using Gemini AI.
 
