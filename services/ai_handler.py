@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 from PIL import Image
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 import google.generativeai as genai
-from config import GEMINI_API_KEY, GEMINI_MODEL
+from config import GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT
 
 class GeminiWorker(QThread):
     finished_signal = pyqtSignal(str)
@@ -30,13 +30,7 @@ class GeminiHandler(QObject):
         super().__init__()
         self.worker: Optional[GeminiWorker] = None
         self.chat_session = None
-        self.system_instruction = (
-            "Ты помощник на техническом собеседовании. Твоя цель — помогать кандидату незаметно и быстро. "
-            "1. Отвечай строго на **Русском языке**.\n"
-            "2. Код пиши в блоках ```python (или другой язык) ... ```.\n"
-            "3. Используй Clean Code, современные паттерны, типизацию.\n"
-            "4. Если прислали картинку — решай задачу. Если текст — отвечай на вопрос по контексту."
-        )
+        self.system_instruction = SYSTEM_PROMPT
         self._init_model()
 
     def _init_model(self) -> None:
