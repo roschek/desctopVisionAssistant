@@ -209,3 +209,6 @@ __marimo__/
 # Application specific
 debug_screenshots/
 spec.md
+audio_captures/
+.venv312/
+*.wav

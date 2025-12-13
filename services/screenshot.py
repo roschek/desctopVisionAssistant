@@ -12,20 +12,20 @@ class ScreenshotService:
 
     def take_screenshot(self, filename: str = "debug_snap.png") -> Tuple[str, Image.Image]:
         """
-        Захватывает основной экран.
-        Возвращает: (путь_к_файлу, объект_PIL_Image)
+        Capture primary monitor.
+        Returns: (file_path, PIL Image)
         """
         file_path = self.output_dir / filename
         
         with mss.mss() as sct:
-            # Захват первого монитора
+            # Grab first monitor
             monitor = sct.monitors[1]
             sct_img = sct.grab(monitor)
             
-            # Сохранение на диск (для дебага)
+            # Save to disk (debug)
             mss.tools.to_png(sct_img.rgb, sct_img.size, output=str(file_path))
             
-            # Конвертация в PIL Image для работы в памяти
+            # Convert to PIL Image for in-memory use
             img = Image.frombytes("RGB", sct_img.size, sct_img.rgb)
             
         print(f"Screenshot saved: {file_path}")

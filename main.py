@@ -4,7 +4,7 @@ from ui.main_window import MainWindow
 
 def main() -> None:
     """
-    Точка входа в приложение.
+    Application entry point.
     """
     app = QApplication(sys.argv)
     

@@ -6,6 +6,7 @@ class HotkeyListener(QObject):
     analyze_stack_signal = pyqtSignal()
     clear_buffer_signal = pyqtSignal()
     toggle_click_through_signal = pyqtSignal() # Ctrl+Alt+Z
+    save_audio_signal = pyqtSignal()  # Ctrl+Alt+A
 
     def __init__(self) -> None:
         super().__init__()
@@ -17,9 +18,10 @@ class HotkeyListener(QObject):
             keyboard.add_hotkey("ctrl+alt+space", lambda: self.analyze_stack_signal.emit())
             keyboard.add_hotkey("ctrl+alt+x", lambda: self.clear_buffer_signal.emit())
             keyboard.add_hotkey("ctrl+alt+z", lambda: self.toggle_click_through_signal.emit())
+            keyboard.add_hotkey("ctrl+alt+a", lambda: self.save_audio_signal.emit())
             
             self._is_active = True
-            print("Hotkeys: S=Add, Space=Analyze, X=Clear, Z=OverlayMode")
+            print("Hotkeys: S=Add, Space=Analyze, X=Clear, Z=OverlayMode, A=SaveAudio")
         except Exception as e:
             print(f"Failed to bind hotkeys: {e}")
 

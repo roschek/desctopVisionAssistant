@@ -1,4 +1,5 @@
 import sys
+import os
 import time
 from typing import List, Optional
 from PIL import Image
@@ -10,6 +11,7 @@ from PyQt6.QtCore import Qt, QEvent
 from services.screenshot import ScreenshotService
 from services.hotkeys import HotkeyListener
 from services.ai_handler import GeminiHandler
+from services.audio_service import AudioService
 from utils.window_utils import apply_window_privacy, set_click_through
 
 class MainWindow(QMainWindow):
@@ -17,11 +19,13 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.image_buffer: List[Image.Image] = []
-        self.click_through_enabled = False # State flag
+        self.click_through_enabled = False  # State flag
         
         self.screenshot_service = ScreenshotService()
         self.hotkey_listener = HotkeyListener()
         self.gemini_handler = GeminiHandler()
+        self.audio_service = AudioService()
+        self.audio_service.ensure_recorder_running()
         
         self._connect_signals()
         self._setup_window_properties()
@@ -35,6 +39,7 @@ class MainWindow(QMainWindow):
         self.hotkey_listener.analyze_stack_signal.connect(self.handle_analyze_stack)
         self.hotkey_listener.clear_buffer_signal.connect(self.handle_clear_buffer)
         self.hotkey_listener.toggle_click_through_signal.connect(self.handle_toggle_click_through)
+        self.hotkey_listener.save_audio_signal.connect(self.handle_save_audio)
         
         self.gemini_handler.response_received.connect(self.display_solution)
         self.gemini_handler.error_occurred.connect(self.display_error)
@@ -70,7 +75,12 @@ class MainWindow(QMainWindow):
         self.content_area = QTextEdit()
         self.content_area.setReadOnly(True)
         self.content_area.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
-        self.content_area.setPlaceholderText("Ctrl+Alt+S: Add Screenshot\nCtrl+Alt+Space: Analyze All\nCtrl+Alt+Z: Toggle Click-Through")
+        self.content_area.setPlaceholderText(
+            "Ctrl+Alt+S: Add Screenshot\n"
+            "Ctrl+Alt+Space: Analyze All\n"
+            "Ctrl+Alt+A: Send Last Audio\n"
+            "Ctrl+Alt+Z: Toggle Click-Through"
+        )
         self.content_area.setStyleSheet("""
             QTextEdit {
                 background-color: #2d2d2d;
@@ -102,7 +112,8 @@ class MainWindow(QMainWindow):
         # Footer
         hint_text = (
             "Ctrl+Alt+S: Add Screen | Ctrl+Alt+Space: Solve | "
-            "Ctrl+Alt+X: Reset | Ctrl+Alt+Z: Overlay | Esc: Close"
+            "Ctrl+Alt+A: Send Audio | Ctrl+Alt+X: Reset | "
+            "Ctrl+Alt+Z: Overlay | Esc: Close"
         )
         hint_label = QLabel(hint_text)
         hint_label.setStyleSheet("color: #666666; font-size: 11px; font-weight: bold;")
@@ -124,15 +135,14 @@ class MainWindow(QMainWindow):
             set_click_through(hwnd, self.click_through_enabled)
             
             if self.click_through_enabled:
-                self.setWindowOpacity(0.4) # Делаем прозрачнее, чтобы код под окном был виден
+                self.setWindowOpacity(0.4)  # More transparent so code beneath is visible
                 self.status_label.setText("OVERLAY MODE (Click-Through)")
                 self.status_label.setStyleSheet("color: #e67e22; font-size: 14px; font-weight: bold;")
-                self.content_area.setStyleSheet("background-color: rgba(30, 30, 30, 100); color: white; border: none;") # Полупрозрачный фон редактора
+                self.content_area.setStyleSheet("background-color: rgba(30, 30, 30, 100); color: white; border: none;")  # Semi-transparent editor background
             else:
-                self.setWindowOpacity(0.85) # Возвращаем читаемость
+                self.setWindowOpacity(0.85)  # Restore readability
                 self.status_label.setText("Interactive Mode")
                 self.status_label.setStyleSheet("color: #cccccc; font-size: 14px; font-weight: bold;")
-                # Возвращаем нормальный стиль
                 self.content_area.setStyleSheet("""
                     QTextEdit {
                         background-color: #2d2d2d;
@@ -153,7 +163,6 @@ class MainWindow(QMainWindow):
         if not text:
             return
             
-        # Добавляем вопрос пользователя в лог для наглядности
         self.content_area.append(f"\n\n**You:** {text}")
         self.chat_input.clear()
         
@@ -172,8 +181,7 @@ class MainWindow(QMainWindow):
             print(f"Capture failed: {e}")
         finally:
             self.show()
-            # Если мы были в режиме Overlay, нужно убедиться, что свойства окна восстановились корректно
-            # (Но hide/show может сбросить click-through, поэтому восстановим его при необходимости)
+            # If we were in overlay mode, ensure click-through is restored after show()
             if self.click_through_enabled:
                 hwnd = int(self.winId())
                 set_click_through(hwnd, True)
@@ -200,14 +208,14 @@ class MainWindow(QMainWindow):
             return
 
         images_to_send = list(self.image_buffer) 
-        self.gemini_handler.send_request(images_to_send) # Используем универсальный метод
+        self.gemini_handler.send_request(images_to_send)
         
         self.image_buffer.clear()
         self._update_buffer_badge()
 
     def handle_clear_buffer(self) -> None:
         self.image_buffer.clear()
-        self.gemini_handler.reset_session()  # Сброс контекста AI
+        self.gemini_handler.reset_session()
         self._update_buffer_badge()
         self.status_label.setText("Buffer & Context Cleared")
         self.content_area.setPlainText("Stack and history cleared.")
@@ -225,9 +233,7 @@ class MainWindow(QMainWindow):
     def display_solution(self, text: str) -> None:
         self.status_label.setText("Solution Ready")
         self.status_label.setStyleSheet("color: #2ecc71; font-size: 14px; font-weight: bold;")
-        # Добавляем ответ, а не перезаписываем (важно для чата)
         self.content_area.append(f"\n\n**Gemini:**\n{text}")
-        # Прокрутка вниз
         sb = self.content_area.verticalScrollBar()
         sb.setValue(sb.maximum())
 
@@ -240,3 +246,18 @@ class MainWindow(QMainWindow):
         if event.key() == Qt.Key.Key_Escape:
             self.hotkey_listener.stop()
             self.close()
+
+    # --- Audio ---
+    def handle_save_audio(self) -> None:
+        try:
+            self.audio_service.ensure_recorder_running()
+            wav_bytes = self.audio_service.get_last_audio_wav_bytes(seconds=30)
+            if not wav_bytes:
+                self.display_error("Audio not captured")
+                return
+            self.gemini_handler.send_audio(wav_bytes, prompt="")
+            self.status_label.setText("Audio Sent")
+            self.status_label.setStyleSheet("color: #2ecc71; font-size: 14px; font-weight: bold;")
+            self.content_area.append("\nAudio: last ~30s sent to Gemini")
+        except Exception as e:
+            self.display_error(f"Audio send failed: {e}")

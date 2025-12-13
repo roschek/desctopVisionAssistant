@@ -2,7 +2,8 @@ from typing import List, Optional, Union
 from PIL import Image
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 import google.generativeai as genai
-from config import GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT
+from config import GEMINI_API_KEY, GEMINI_MODEL, SYSTEM_PROMPT, AUDIO_PROMPT
+
 
 class GeminiWorker(QThread):
     finished_signal = pyqtSignal(str)
@@ -15,7 +16,7 @@ class GeminiWorker(QThread):
 
     def run(self) -> None:
         try:
-            # Отправка сообщения в существующую сессию чата
+            # Send message to existing chat session
             response = self.chat_session.send_message(self.content)
             self.finished_signal.emit(response.text)
         except Exception as e:
@@ -43,23 +44,23 @@ class GeminiHandler(QObject):
         self.reset_session()
 
     def reset_session(self) -> None:
-        """Сбрасывает текущую сессию чата."""
+        """Reset current chat session."""
         if hasattr(self, 'model'):
              self.chat_session = self.model.start_chat(history=[])
              print("Chat session reset.")
 
     def send_request(self, content: Union[str, List[Image.Image]]) -> None:
         """
-        Универсальный метод: принимает или список картинок (с дефолтным промптом), или текст.
+        Universal method: accepts list of images (with default prompt) or text.
         """
-        # Проверка на то, что воркер существует и работает
+        # Check worker state
         if self.worker:
             try:
                 if self.worker.isRunning():
                     print("Gemini busy.")
                     return
             except RuntimeError:
-                # Если объект C++ уже удален, но ссылка в Python осталась
+                # If C++ object is gone but Python ref remains
                 self.worker = None
             except Exception:
                 self.worker = None
@@ -68,23 +69,51 @@ class GeminiHandler(QObject):
 
         final_content = content
         
-        # Если пришли картинки, добавляем к ним промпт "Реши это"
+        # If images provided, append a default "Solve this" prompt
         if isinstance(content, list) and content and isinstance(content[0], Image.Image):
-            # Копируем картинки
+            # Copy images
             imgs = [img.copy() for img in content]
-            # Формируем сообщение: Картинки + текст
-            final_content = imgs + ["Проанализируй эти скриншоты и дай решение."]
+            # Message: images + text
+            final_content = imgs + ["Analyze these screenshots and provide a solution."]
         
         self.worker = GeminiWorker(self.chat_session, final_content)
         self.worker.finished_signal.connect(self._on_success)
         self.worker.error_signal.connect(self._on_error)
-        # Сначала очищаем ссылку в Python, потом удаляем объект в C++
+        # Clear Python reference before deleting C++ object
+        self.worker.finished.connect(self._cleanup_worker)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.start()
+
+    def send_audio(self, wav_bytes: bytes, prompt: str) -> None:
+        """
+        Send audio (wav) + prompt.
+        """
+        if self.worker:
+            try:
+                if self.worker.isRunning():
+                    print("Gemini busy.")
+                    return
+            except RuntimeError:
+                self.worker = None
+            except Exception:
+                self.worker = None
+
+        self.processing_started.emit()
+       
+        content = [
+            {"mime_type": "audio/wav", "data": wav_bytes},
+            prompt or AUDIO_PROMPT,
+        ]
+
+        self.worker = GeminiWorker(self.chat_session, content)
+        self.worker.finished_signal.connect(self._on_success)
+        self.worker.error_signal.connect(self._on_error)
         self.worker.finished.connect(self._cleanup_worker)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker.start()
 
     def _cleanup_worker(self) -> None:
-        """Очищает ссылку на воркер после завершения."""
+        """Clear worker reference after completion."""
         self.worker = None
 
     def _on_success(self, text: str) -> None:

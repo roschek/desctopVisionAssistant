@@ -33,7 +33,7 @@ echo Starting PyInstaller...
 echo Options: --onefile --noconsole --clean --name "DesktopVisionAssistant"
 echo.
 
-REM Используем python -m PyInstaller чтобы избежать проблем с PATH
+REM Use python -m PyInstaller to avoid PATH issues
 python -m PyInstaller --noconsole --onefile --clean --name "DesktopVisionAssistant" main.py
 
 if %errorlevel% neq 0 (

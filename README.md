@@ -17,6 +17,8 @@ Application for automated screenshot analysis and assistance using Gemini AI.
 3. Create a `.env` file in the root directory with your API key:
    ```env
    GEMINI_API_KEY=your_api_key_here
+   CUSTOM_SYSTEM_PROMPT
+   AUDIO_PROMPT
    ```
 
 ## Building the Application
@@ -44,6 +46,7 @@ To create a standalone executable (`.exe`):
 
 - **Ctrl+Alt+S**: Capture screenshot and add to buffer
 - **Ctrl+Alt+Space**: Analyze all buffered screenshots
+- **Ctrl+Alt+A**: Send recent audio snippet
 - **Ctrl+Alt+X**: Clear buffer and reset AI context
 - **Ctrl+Alt+Z**: Toggle overlay mode (click-through)
 - **Esc**: Close application
@@ -54,6 +57,7 @@ To create a standalone executable (`.exe`):
 - **Overlay Mode**: Transparent window that doesn't interfere with your workflow
 - **Chat Interface**: Ask follow-up questions after analysis
 - **Privacy Mode**: Window is excluded from screen capture by other applications
+- **Recent Audio Snippet**: Captures a short recent segment from the active output device and sends it with a concise prompt
 
 ## Troubleshooting
 
